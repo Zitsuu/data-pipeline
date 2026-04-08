@@ -1,7 +1,6 @@
 # Data Pipeline — GitHub Trending Repos
 
-<!-- Replace USERNAME/REPO with your GitHub username and repository name -->
-![CI](https://github.com/USERNAME/REPO/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/Zitsuu/data-pipeline/actions/workflows/ci.yml/badge.svg)
 
 An end-to-end data engineering pipeline that ingests trending GitHub repositories, transforms the data with dbt, and visualizes insights in Metabase. Orchestrated by Prefect, stored in PostgreSQL, and fully containerized with Docker Compose.
 
