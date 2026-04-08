@@ -87,7 +87,8 @@ Metabase runs at **http://localhost:3000**. See [dashboards/SETUP.md](dashboards
 
 All SQL queries are in [dashboards/queries.sql](dashboards/queries.sql).
 
-![Metabase Dashboard](docs/screenshots/metabase_dashboard.png)
+![Metabase Dashboard Top](docs/screenshots/metabase_dashboard_top.png)
+![Metabase Dashboard Bottom](docs/screenshots/metabase_dashboard_bottom.png)
 
 ## Setup
 
