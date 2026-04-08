@@ -1,0 +1,115 @@
+version: 2
+
+models:
+  - name: dim_languages
+    description: "Language dimension with display names and categories"
+    columns:
+      - name: language_key
+        description: "Surrogate key for the language"
+        tests:
+          - unique
+          - not_null
+      - name: language
+        description: "Language identifier as used in API queries"
+        tests:
+          - unique
+          - not_null
+      - name: language_display_name
+        description: "Human-readable language name"
+      - name: language_category
+        description: "Grouping: high-level or systems"
+        tests:
+          - accepted_values:
+              values: ['high-level', 'systems', 'other']
+
+  - name: dim_repos
+    description: "Repository dimension with latest known attributes per repo"
+    columns:
+      - name: repo_id
+        description: "GitHub repository ID (primary key)"
+        tests:
+          - unique
+          - not_null
+      - name: full_name
+        description: "Full repository name (owner/repo)"
+      - name: owner_login
+        description: "Repository owner"
+      - name: language
+        description: "Query language"
+      - name: language_key
+        description: "Foreign key to dim_languages"
+        tests:
+          - relationships:
+              to: ref('dim_languages')
+              field: language_key
+      - name: has_description
+        description: "Whether the repo has a non-empty description"
+
+  - name: fct_repo_daily_snapshots
+    description: >
+      Fact table with one row per repo per day, including star/fork/issue counts
+      and day-over-day deltas. Central table for trend analysis.
+    columns:
+      - name: repo_snapshot_id
+        description: "Primary key (surrogate from repo_id + fetched_at)"
+        tests:
+          - unique
+          - not_null
+      - name: repo_id
+        description: "Foreign key to dim_repos"
+        tests:
+          - relationships:
+              to: ref('dim_repos')
+              field: repo_id
+      - name: language_key
+        description: "Foreign key to dim_languages"
+        tests:
+          - relationships:
+              to: ref('dim_languages')
+              field: language_key
+      - name: snapshot_date
+        description: "Date of the snapshot"
+        tests:
+          - not_null
+      - name: stars
+        description: "Star count"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+      - name: stars_delta
+        description: "Day-over-day change in stars"
+      - name: forks_delta
+        description: "Day-over-day change in forks"
+      - name: issues_delta
+        description: "Day-over-day change in open issues"
+
+  - name: mart_trending_summary
+    description: >
+      Pre-aggregated summary table for dashboards. One row per language per day
+      with totals, averages, and the top repo by stars.
+    columns:
+      - name: snapshot_date
+        description: "Date of the summary"
+      - name: language_key
+        description: "Foreign key to dim_languages"
+      - name: language
+        description: "Language identifier"
+      - name: total_repos
+        description: "Number of repos tracked that day"
+      - name: total_stars
+        description: "Sum of all stars across repos"
+      - name: avg_stars
+        description: "Average stars per repo"
+      - name: max_stars
+        description: "Highest star count that day"
+      - name: total_stars_delta
+        description: "Sum of day-over-day star changes"
+      - name: new_repos_count
+        description: "Repos appearing for the first time"
+      - name: top_repo_id
+        description: "Repo with the most stars that day"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - snapshot_date
+            - language_key

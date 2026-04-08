@@ -1,0 +1,91 @@
+name: dbt CI
+
+on:
+  push:
+  pull_request:
+
+env:
+  POSTGRES_HOST: localhost
+  POSTGRES_USER: pipeline
+  POSTGRES_PASSWORD: pipeline_dev_pw
+  POSTGRES_DB: warehouse
+  POSTGRES_PORT: 5432
+
+jobs:
+  dbt-build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: pipeline
+          POSTGRES_PASSWORD: pipeline_dev_pw
+          POSTGRES_DB: warehouse
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pipeline"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: pip-
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Wait for Postgres
+        run: |
+          for i in $(seq 1 15); do
+            pg_isready -h localhost -p 5432 -U pipeline && break
+            echo "Waiting for postgres ($i)..."
+            sleep 2
+          done
+
+      - name: Initialize schemas
+        run: |
+          psql -h localhost -U pipeline -d warehouse -f sql/init.sql
+          psql -h localhost -U pipeline -d warehouse -f sql/002_raw_tables.sql
+        env:
+          PGPASSWORD: pipeline_dev_pw
+
+      - name: Seed fixture data
+        run: psql -h localhost -U pipeline -d warehouse -f tests/fixtures/github_trending_seed.sql
+        env:
+          PGPASSWORD: pipeline_dev_pw
+
+      - name: Install dbt packages
+        working-directory: dbt_project
+        run: dbt deps
+
+      - name: dbt debug
+        working-directory: dbt_project
+        run: dbt debug --profiles-dir ./ci
+
+      - name: dbt build (models + tests + snapshots)
+        working-directory: dbt_project
+        run: dbt build --profiles-dir ./ci
+
+      - name: Upload dbt artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dbt-logs
+          path: |
+            dbt_project/logs/
+            dbt_project/target/

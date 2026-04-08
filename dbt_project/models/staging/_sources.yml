@@ -1,0 +1,44 @@
+version: 2
+
+sources:
+  - name: github_raw
+    schema: raw
+    description: "Raw ingested data from the GitHub API, loaded by the Prefect flow"
+    tables:
+      - name: github_trending
+        description: "Trending GitHub repositories fetched hourly across multiple languages"
+        freshness:
+          warn_after: {count: 2, period: hour}
+          error_after: {count: 6, period: hour}
+        loaded_at_field: fetched_at
+        columns:
+          - name: repo_id
+            description: "GitHub repository ID"
+          - name: full_name
+            description: "Full repository name (owner/repo)"
+          - name: owner_login
+            description: "GitHub username of the repository owner"
+          - name: html_url
+            description: "URL to the repository on GitHub"
+          - name: description
+            description: "Repository description"
+          - name: language
+            description: "Programming language used in the search query"
+          - name: stars
+            description: "Number of stargazers"
+          - name: forks
+            description: "Number of forks"
+          - name: open_issues
+            description: "Number of open issues"
+          - name: watchers
+            description: "Number of watchers"
+          - name: created_at
+            description: "When the repository was created on GitHub"
+          - name: updated_at
+            description: "When the repository was last updated"
+          - name: pushed_at
+            description: "When the repository last had a push"
+          - name: topics
+            description: "Array of topic tags on the repository"
+          - name: fetched_at
+            description: "Timestamp when this row was ingested by the pipeline"

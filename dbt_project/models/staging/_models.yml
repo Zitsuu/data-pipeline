@@ -1,0 +1,89 @@
+version: 2
+
+models:
+  - name: stg_github__trending_repos
+    description: >
+      Staging model for trending GitHub repositories. Cleans and enriches
+      raw data from the GitHub Search API with derived metrics like repo age,
+      push recency, and topic counts. One row per repo per fetch.
+    columns:
+      - name: repo_snapshot_id
+        description: "Surrogate key from repo_id + fetched_at"
+        tests:
+          - unique
+          - not_null
+
+      - name: repo_id
+        description: "GitHub repository ID"
+        tests:
+          - not_null
+
+      - name: full_name
+        description: "Full repository name (owner/repo)"
+        tests:
+          - not_null
+
+      - name: owner_login
+        description: "GitHub username of the repository owner"
+
+      - name: html_url
+        description: "URL to the repository on GitHub"
+
+      - name: description
+        description: "Repository description (may be null)"
+
+      - name: language
+        description: "Programming language used in the search query"
+        tests:
+          - accepted_values:
+              values: ['python', 'typescript', 'rust', 'go', 'javascript']
+
+      - name: topics
+        description: "Array of topic tags"
+
+      - name: stars
+        description: "Number of stargazers"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+      - name: forks
+        description: "Number of forks"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+      - name: open_issues
+        description: "Number of open issues"
+
+      - name: watchers
+        description: "Number of watchers"
+
+      - name: created_at
+        description: "When the repository was created on GitHub"
+
+      - name: updated_at
+        description: "When the repository was last updated"
+
+      - name: pushed_at
+        description: "When the repository last had a push"
+
+      - name: fetched_at
+        description: "Timestamp when this row was ingested"
+        tests:
+          - not_null
+
+      - name: snapshot_date
+        description: "Date portion of fetched_at for partitioning"
+
+      - name: repo_age_days
+        description: "Days between repo creation and fetch time"
+
+      - name: days_since_last_push
+        description: "Days between last push and fetch time"
+
+      - name: has_description
+        description: "Whether the repo has a non-empty description"
+
+      - name: topic_count
+        description: "Number of topics tagged on the repo"

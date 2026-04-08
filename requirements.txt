@@ -1,0 +1,12 @@
+prefect
+psycopg2-binary
+sqlalchemy
+pandas
+requests
+python-dotenv
+pydantic
+pydantic-settings
+dbt-core
+dbt-postgres
+pytest
+httpx

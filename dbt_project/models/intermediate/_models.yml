@@ -1,0 +1,57 @@
+version: 2
+
+models:
+  - name: int_repos_deduped
+    description: >
+      Deduplicated repos keeping only the most recent fetch per repo per day.
+      Removes duplicates from multiple hourly ingestion runs on the same day.
+    columns:
+      - name: repo_snapshot_id
+        description: "Surrogate key (repo_id + fetched_at)"
+      - name: repo_id
+        description: "GitHub repository ID"
+        tests:
+          - not_null
+      - name: snapshot_date
+        description: "Date of the snapshot"
+        tests:
+          - not_null
+      - name: full_name
+        description: "Full repository name (owner/repo)"
+      - name: stars
+        description: "Star count at time of fetch"
+      - name: forks
+        description: "Fork count at time of fetch"
+      - name: open_issues
+        description: "Open issue count at time of fetch"
+      - name: language
+        description: "Query language"
+      - name: fetched_at
+        description: "Ingestion timestamp"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - repo_id
+            - snapshot_date
+
+  - name: int_repo_daily_deltas
+    description: >
+      Daily repo snapshots enriched with day-over-day deltas for stars, forks,
+      and open issues using lag window functions.
+    columns:
+      - name: repo_id
+        description: "GitHub repository ID"
+        tests:
+          - not_null
+      - name: snapshot_date
+        description: "Date of the snapshot"
+        tests:
+          - not_null
+      - name: stars_delta
+        description: "Change in stars since previous snapshot (null for first appearance)"
+      - name: forks_delta
+        description: "Change in forks since previous snapshot"
+      - name: issues_delta
+        description: "Change in open issues since previous snapshot"
+      - name: prev_snapshot_date
+        description: "Date of the previous snapshot for this repo (null for first)"

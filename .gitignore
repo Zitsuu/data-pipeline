@@ -1,0 +1,12 @@
+venv/
+__pycache__/
+*.pyc
+.env
+postgres_data/
+metabase_data/
+prefect_data/
+dbt_project/target/
+dbt_project/dbt_packages/
+dbt_project/logs/
+.pytest_cache/
+*.egg-info

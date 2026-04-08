@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m venv venv)",
+      "Bash(\"/c/Program Files/Docker/Docker/Docker Desktop.exe\")",
+      "Bash(disown)",
+      "Bash(docker compose:*)",
+      "Bash(venv/Scripts/python.exe -m pytest tests/test_ingest.py -v)",
+      "Bash(curl -s http://localhost:4200/api/health)",
+      "Bash(venv/Scripts/python.exe -m prefect config set PREFECT_API_URL=http://localhost:4200/api)",
+      "Bash(venv/Scripts/python.exe -m prefect config view)"
+    ]
+  }
+}
